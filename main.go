@@ -208,7 +208,7 @@ func showDefaultFormats(mem memory.Allocator, rows int, start int64) {
 
 func main() {
 	rows := 1
-	start := int64(100)
+	start := int64(1000)
 	mem := memory.DefaultAllocator
 
 	showDefaultFormats(mem, rows, start)
