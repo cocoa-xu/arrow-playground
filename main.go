@@ -176,6 +176,21 @@ func decimal256Format(mem memory.Allocator, rows int, _ int64) {
 	defer value.Release()
 }
 
+func durationNsFormat(mem memory.Allocator, rows int, start int64) {
+	ib := array.NewDurationBuilder(mem, &arrow.DurationType{Unit: arrow.Nanosecond})
+	defer ib.Release()
+
+	slice := make([]arrow.Duration, rows)
+	for i := int64(0); i < int64(rows); i++ {
+		slice[i] = arrow.Duration(i + start)
+	}
+	ib.AppendValues(slice, nil)
+	value := ib.NewDurationArray()
+	fmt.Printf("durationNs[default]: %s\n", value.ValueStr(0))
+	fmt.Printf("durationNs[Value]: %d\n", value.Value(0))
+	defer value.Release()
+}
+
 func showDefaultFormats(mem memory.Allocator, rows int, start int64) {
 	float16Format(mem, rows, start)
 	binaryFormat(mem, rows, start)
@@ -188,6 +203,7 @@ func showDefaultFormats(mem memory.Allocator, rows int, start int64) {
 	time64nsFormat(mem, rows, start)
 	decimal128Format(mem, rows, start)
 	decimal256Format(mem, rows, start)
+	durationNsFormat(mem, rows, start)
 }
 
 func main() {
