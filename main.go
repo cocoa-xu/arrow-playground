@@ -2,10 +2,14 @@ package main
 
 import (
 	"fmt"
+	"math"
+	"math/big"
 	"time"
 
 	"github.com/apache/arrow/go/v17/arrow"
 	"github.com/apache/arrow/go/v17/arrow/array"
+	"github.com/apache/arrow/go/v17/arrow/decimal128"
+	"github.com/apache/arrow/go/v17/arrow/decimal256"
 	"github.com/apache/arrow/go/v17/arrow/memory"
 )
 
@@ -79,7 +83,7 @@ func time32sFormat(mem memory.Allocator, rows int, start int64) {
 	}
 	ib.AppendValues(slice, nil)
 	value := ib.NewTime32Array()
-	fmt.Printf("time32s: %s\n", value.ValueStr(0))
+	fmt.Printf("time32s[default]: %s\n", value.ValueStr(0))
 	defer value.Release()
 }
 
@@ -93,7 +97,7 @@ func time32msFormat(mem memory.Allocator, rows int, start int64) {
 	}
 	ib.AppendValues(slice, nil)
 	value := ib.NewTime32Array()
-	fmt.Printf("time32ms: %s\n", value.ValueStr(0))
+	fmt.Printf("time32ms[default]: %s\n", value.ValueStr(0))
 	defer value.Release()
 }
 
@@ -107,7 +111,7 @@ func time64nsFormat(mem memory.Allocator, rows int, start int64) {
 	}
 	ib.AppendValues(slice, nil)
 	value := ib.NewTime64Array()
-	fmt.Printf("time64ns: %s\n", value.ValueStr(0))
+	fmt.Printf("time64ns[default]: %s\n", value.ValueStr(0))
 	defer value.Release()
 }
 
@@ -121,7 +125,35 @@ func time64usFormat(mem memory.Allocator, rows int, start int64) {
 	}
 	ib.AppendValues(slice, nil)
 	value := ib.NewTime64Array()
-	fmt.Printf("time64us: %s\n", value.ValueStr(0))
+	fmt.Printf("time64us[default]: %s\n", value.ValueStr(0))
+	defer value.Release()
+}
+
+func decimal128Format(mem memory.Allocator, rows int, _ int64) {
+	ib := array.NewDecimal128Builder(mem, &arrow.Decimal128Type{Precision: 37, Scale: 2})
+	defer ib.Release()
+
+	for i := 0; i < rows; i++ {
+		v := new(big.Int).SetUint64(uint64(math.Pow(2, 64) - 1))
+		v = v.Add(v, big.NewInt(int64(i)))
+		ib.Append(decimal128.FromBigInt(v))
+	}
+	value := ib.NewDecimal128Array()
+	fmt.Printf("decimal128[default]: %s\n", value.ValueStr(0))
+	defer value.Release()
+}
+
+func decimal256Format(mem memory.Allocator, rows int, _ int64) {
+	ib := array.NewDecimal256Builder(mem, &arrow.Decimal256Type{Precision: 76, Scale: 4})
+	defer ib.Release()
+
+	for i := 0; i < rows; i++ {
+		v := new(big.Int).SetUint64(uint64(math.Pow(2, 64) - 1))
+		v = v.Add(v, big.NewInt(int64(i)))
+		ib.Append(decimal256.FromBigInt(v))
+	}
+	value := ib.NewDecimal256Array()
+	fmt.Printf("decimal256[default]: %s\n", value.ValueStr(0))
 	defer value.Release()
 }
 
@@ -134,6 +166,8 @@ func showDefaultFormats(mem memory.Allocator, rows int, start int64) {
 	time32msFormat(mem, rows, start)
 	time64usFormat(mem, rows, start)
 	time64nsFormat(mem, rows, start)
+	decimal128Format(mem, rows, start)
+	decimal256Format(mem, rows, start)
 }
 
 func main() {
