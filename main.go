@@ -10,8 +10,23 @@ import (
 	"github.com/apache/arrow/go/v17/arrow/array"
 	"github.com/apache/arrow/go/v17/arrow/decimal128"
 	"github.com/apache/arrow/go/v17/arrow/decimal256"
+	"github.com/apache/arrow/go/v17/arrow/float16"
 	"github.com/apache/arrow/go/v17/arrow/memory"
 )
+
+func float16Format(mem memory.Allocator, rows int, _ int64) {
+	ib := array.NewFloat16Builder(mem)
+	defer ib.Release()
+
+	slice := make([]float16.Num, rows)
+	for i := int64(0); i < int64(rows); i++ {
+		slice[i] = float16.New(float32(1.234))
+	}
+	ib.AppendValues(slice, nil)
+	value := ib.NewFloat16Array()
+	fmt.Printf("float16[default]: %s\n", value.ValueStr(0))
+	defer value.Release()
+}
 
 func binaryFormat(mem memory.Allocator, rows int, start int64) {
 	ib := array.NewBinaryBuilder(mem, arrow.BinaryTypes.Binary)
@@ -98,6 +113,10 @@ func time32msFormat(mem memory.Allocator, rows int, start int64) {
 	ib.AppendValues(slice, nil)
 	value := ib.NewTime32Array()
 	fmt.Printf("time32ms[default]: %s\n", value.ValueStr(0))
+
+	fmt.Printf("time32ms[Second]: %s\n", value.Value(0).FormattedString(arrow.Second))
+	fmt.Printf("time32ms[Microsecond]: %s\n", value.Value(0).FormattedString(arrow.Millisecond))
+	fmt.Printf("time32ms[Value]: %d\n", value.Value(0))
 	defer value.Release()
 }
 
@@ -158,10 +177,11 @@ func decimal256Format(mem memory.Allocator, rows int, _ int64) {
 }
 
 func showDefaultFormats(mem memory.Allocator, rows int, start int64) {
+	float16Format(mem, rows, start)
 	binaryFormat(mem, rows, start)
 	date32Format(mem, rows, start)
 	date64Format(mem, rows, start)
-	timestampNsFormat(mem, rows, start)
+	timestampNsFormat(mem, rows, 1000000)
 	time32sFormat(mem, rows, start)
 	time32msFormat(mem, rows, start)
 	time64usFormat(mem, rows, start)
